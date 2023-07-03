@@ -4,6 +4,7 @@ A lightweight, modular, composable and testable business layer, designed for dat
 This is a working concept. Although, some less important stuff are only partially implemented.
 
 ## Scenario 1: Simple APIOperation usage examples
+```swift
     APIOperationFactory
         .fetchKey()
         .perform { result in
@@ -14,9 +15,10 @@ This is a working concept. Although, some less important stuff are only partiall
                 print("fetchKey operation completed with error: \(error)")
             }
         }
-}
+```
 
 ## Scenario 2: APIOperation tooling usage examples
+```swift
     APIOperationFactory
         .fetchKey()
         .cached(timeout: 60)
@@ -30,10 +32,11 @@ This is a working concept. Although, some less important stuff are only partiall
                 print("fetchKey operation completed with error: \(error)")
             }
         }
-}
+```
 
 
 ## Scenario 3: APIOperation + Transformations = ❤️
+```swift
     APIOperationFactory
         .fetchKey()
         .mapValue(countCharacters)
@@ -46,11 +49,11 @@ This is a working concept. Although, some less important stuff are only partiall
                 print("fetchKey operation completed with error: \(error)")
             }
         }
-}
-
+```
 
 
 ## Scenario 4: Waiting for multiple operations to finish
+```swift
     let fetchKeyOperation = APIOperationFactory.fetchKey()
     let fetchUserIdOperation = APIOperationFactory.fetchUserId()
     zip(fetchKeyOperation, fetchUserIdOperation)
@@ -62,10 +65,11 @@ This is a working concept. Although, some less important stuff are only partiall
                 print("zipped operations completed with error: \(error)")
             }
         }
-}
+```
 
 
 ## Scenario 5: Sequenced operations
+```swift
     struct UserIdAPIOperationTransformation: Transformation {
         func transform(_ input: String) -> AnyOperation<Int> {
             print("passed \"\(input)\" to UserIdAPIOperationTransformation")
@@ -86,5 +90,5 @@ This is a working concept. Although, some less important stuff are only partiall
                 print("sequenced operation finished with error: \(error)")
             }
         }
-}
+```
 
