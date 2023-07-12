@@ -1,5 +1,8 @@
 import Foundation
 
+/**
+ Defines a tranfromation which decodes data into an expected type.
+ */
 struct Decoder<Output: Decodable>: Transformation {
     public var decoder: JSONDecoder = {
         let decoder = JSONDecoder()

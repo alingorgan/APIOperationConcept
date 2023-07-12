@@ -1,37 +1,39 @@
 import Foundation
 
+/**
+ Defines an API operation which passes the output to another operation as input
+ */
 final class ValueChainingAPIOperation<TransformedOutput: RawModel, Output: RawModel>: APIOperation {
-    let operation: AnyOperation<Output>
-    let transformation: AnyTransformation<Output, AnyOperation<TransformedOutput>>
-    private var subsequentOperation: Cancellable?
+    let operation: AnyAPIOperation<Output>
+    let transformation: AnyTransformation<Output, AnyAPIOperation<TransformedOutput>>
+    private var cancellableOperations = [CancellableOperation]()
+    private var subsequentOperation: CancellableOperation?
 
-    init(operation: AnyOperation<Output>, transformation: AnyTransformation<Output, AnyOperation<TransformedOutput>>) {
+    init(operation: AnyAPIOperation<Output>, transformation: AnyTransformation<Output, AnyAPIOperation<TransformedOutput>>) {
         self.operation = operation
         self.transformation = transformation
     }
 
-    func perform(completion: (Result<TransformedOutput, Error>) -> Void) -> Cancellable {
-        operation.perform { result in
+    func perform(completion: (Result<TransformedOutput, Error>) -> Void) -> CancellableOperation {
+        let cancellable = AnyCancellable()
+        let originalOperation = operation.perform { result in
             switch result {
             case .failure(let error):
                 completion(.failure(error))
             case .success(let value):
-                subsequentOperation = transformation
+                let subsequentOperation = transformation
                     .transform(value)
                     .perform(completion: completion)
+                cancellable.add(cancelOperation: subsequentOperation.cancelOperation)
             }
         }
-        return self
-    }
-
-    func cancel() {
-        operation.cancel()
-        subsequentOperation?.cancel()
+        cancellable.add(cancelOperation: originalOperation.cancelOperation)
+        return cancellable
     }
 }
 
-extension AnyOperation {
-    public func mapValue<T>(_ transformation: AnyTransformation<Output, AnyOperation<T>>) -> AnyOperation<T> {
+extension AnyAPIOperation {
+    public func mapValue<T>(_ transformation: AnyTransformation<Output, AnyAPIOperation<T>>) -> AnyAPIOperation<T> {
         ValueChainingAPIOperation(
             operation: self,
             transformation: transformation)

@@ -1,10 +1,13 @@
 import Foundation
 
+/**
+ Defines an API operation which transforms the output into another type
+ */
 struct ValueTrasformingAPIOperation<TransformedOutput: RawModel, Output: RawModel>: APIOperation {
-    let operation: AnyOperation<Output>
+    let operation: AnyAPIOperation<Output>
     let transformation: AnyTransformation<Output, TransformedOutput>
 
-    func perform(completion: (Result<TransformedOutput, Error>) -> Void) -> Cancellable {
+    func perform(completion: (Result<TransformedOutput, Error>) -> Void) -> CancellableOperation {
         operation.perform { result in
             switch result {
             case .failure(let error):
@@ -14,16 +17,11 @@ struct ValueTrasformingAPIOperation<TransformedOutput: RawModel, Output: RawMode
                 completion(.success(transformedValue))
             }
         }
-        return self
-    }
-
-    func cancel() {
-        operation.cancel()
     }
 }
 
-extension AnyOperation {
-    public func mapValue<T>(_ transformation: AnyTransformation<Output, T>) -> AnyOperation<T> {
+extension AnyAPIOperation {
+    public func mapValue<T>(_ transformation: AnyTransformation<Output, T>) -> AnyAPIOperation<T> {
         ValueTrasformingAPIOperation(
             operation: self,
             transformation: transformation)

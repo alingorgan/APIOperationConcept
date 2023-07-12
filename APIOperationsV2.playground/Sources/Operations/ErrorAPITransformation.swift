@@ -1,10 +1,13 @@
 import Foundation
 
+/**
+ Defines an API operation which can transform the output error
+ */
 struct ErrorAPITransformation<Output: RawModel>: APIOperation {
-    let operation: AnyOperation<Output>
+    let operation: AnyAPIOperation<Output>
     let transformation: AnyTransformation<Error, Error>
 
-    func perform(completion: (Result<Output, Error>) -> Void) -> Cancellable {
+    func perform(completion: (Result<Output, Error>) -> Void) -> CancellableOperation {
         operation.perform { result in
             guard case .failure(let error) = result else {
                 completion(result)
@@ -13,16 +16,11 @@ struct ErrorAPITransformation<Output: RawModel>: APIOperation {
             let transformedError = transformation.transform(error)
             completion(.failure(transformedError))
         }
-        return self
-    }
-
-    func cancel() {
-        operation.cancel()
     }
 }
 
-extension AnyOperation {
-    public func mapError(_ transformation: AnyTransformation<Error, Error>) -> AnyOperation {
+extension AnyAPIOperation {
+    public func mapError(_ transformation: AnyTransformation<Error, Error>) -> AnyAPIOperation {
         ErrorAPITransformation(
             operation: self,
             transformation: transformation)

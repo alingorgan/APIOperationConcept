@@ -1,34 +1,36 @@
 import Foundation
 
+/**
+ Defines an API operation which completes when underlying operations complete.
+ */
 final class ZipAPIOperation<T: RawModel & DataModel, U: RawModel & DataModel>: APIOperation {
-    private let lhsOperation: AnyOperation<T>
-    private let rhsOperation: AnyOperation<U>
+    private let lhsOperation: AnyAPIOperation<T>
+    private let rhsOperation: AnyAPIOperation<U>
 
     private var lhsResult: Result<T, Error>? = nil
     private var rhsResult: Result<U, Error>? = nil
 
-    init(lhsOperation: AnyOperation<T>, rhsOperation: AnyOperation<U>) {
+    init(lhsOperation: AnyAPIOperation<T>, rhsOperation: AnyAPIOperation<U>) {
         self.lhsOperation = lhsOperation
         self.rhsOperation = rhsOperation
     }
 
-    func perform(completion: (Result<Pair<T, U>, Error>) -> Void) -> Cancellable {
-        lhsOperation.perform { [weak self] result in
+    func perform(completion: (Result<Pair<T, U>, Error>) -> Void) -> CancellableOperation {
+        let lhsCancellable = lhsOperation.perform { [weak self] result in
             guard let self else { return }
             self.lhsResult = result
             self.processResult(completion)
         }
-        rhsOperation.perform { [weak self] result in
+        let rhsCancellable = rhsOperation.perform { [weak self] result in
             guard let self else { return }
             self.rhsResult = result
             self.processResult(completion)
         }
-        return self
-    }
-
-    func cancel() {
-        lhsOperation.cancel()
-        rhsOperation.cancel()
+        
+        return AnyCancellable(cancelOperations: [
+            lhsCancellable.cancelOperation,
+            rhsCancellable.cancelOperation
+        ])
     }
 
     private func processResult(_ completion: (Result<Pair<T, U>, Error>) -> Void) {
@@ -45,7 +47,7 @@ final class ZipAPIOperation<T: RawModel & DataModel, U: RawModel & DataModel>: A
     }
 }
 
-public func zip<T: RawModel & DataModel, U: RawModel & DataModel>(_ lhs: AnyOperation<T>, _ rhs: AnyOperation<U>) -> AnyOperation<Pair<T, U>> {
+public func zip<T: RawModel & DataModel, U: RawModel & DataModel>(_ lhs: AnyAPIOperation<T>, _ rhs: AnyAPIOperation<U>) -> AnyAPIOperation<Pair<T, U>> {
     ZipAPIOperation(
         lhsOperation: lhs,
         rhsOperation: rhs)

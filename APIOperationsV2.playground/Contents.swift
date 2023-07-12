@@ -1,14 +1,14 @@
 import UIKit
 
 struct APIOperationFactory {
-    static func fetchKey() -> AnyOperation<String> {
+    static func fetchKey() -> AnyAPIOperation<String> {
         HttpServiceOperation(
             request: MockRequest(),
             httpService: StubHTTPService(stubResponse: StubResponse("MyDuMmYkEy")))
         .eraseToAnyOperation()
     }
 
-    static func fetchUserId(key: String = "") -> AnyOperation<Int> {
+    static func fetchUserId(key: String = "") -> AnyAPIOperation<Int> {
         HttpServiceOperation(
             request: MockRequest(),
             httpService: StubHTTPService(stubResponse: StubResponse(key.count)))
@@ -85,7 +85,7 @@ run(scenario: "Waiting for multiple operations to finish") {
 
 run(scenario: "Sequenced operations") {
     struct UserIdAPIOperationTransformation: Transformation {
-        func transform(_ input: String) -> AnyOperation<Int> {
+        func transform(_ input: String) -> AnyAPIOperation<Int> {
             print("passed \"\(input)\" to UserIdAPIOperationTransformation")
             return APIOperationFactory.fetchUserId(key: input)
         }

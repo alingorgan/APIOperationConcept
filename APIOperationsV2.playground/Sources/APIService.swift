@@ -1,40 +1,18 @@
 import Foundation
 
-public protocol Request {
+public protocol APIRequest {
 
 }
 
-public protocol Response {
+
+public protocol APIResponse {
     var data: Data? { get }
     // ...
 }
 
-public protocol HTTPService {
-    func execute(_ request: Request, completion: (Response) -> Void)
-}
-
-public struct StubHTTPService: HTTPService {
-    let stubResponse: Response
-
-    public init(stubResponse: Response) {
-        self.stubResponse = stubResponse
-    }
-    
-    public func execute(_ request: Request, completion: (Response) -> Void) {
-        // TODO: process request
-        // TODO: produce response
-        completion(stubResponse)
-    }
-}
-
-public struct StubResponse: Response {
-    public let data: Data?
-
-    public init<T: Encodable>(_ value: T) {
-        data = try! JSONEncoder().encode(value)
-    }
-}
-
-public struct MockRequest: Request {
-    public init() {}
+/**
+ Defines an API service which executes an APIRequest and completes with a APIResponse
+ */
+public protocol APIService {
+    func execute(_ request: APIRequest, completion: (APIResponse) -> Void)
 }

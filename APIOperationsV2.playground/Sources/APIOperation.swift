@@ -1,18 +1,14 @@
 import Foundation
 
-public protocol Cancellable {
-    func cancel()
-}
-
 public protocol RawModel: Decodable { }
 public protocol DataModel: Decodable { }
 
 
-public protocol APIOperation: Cancellable {
+public protocol APIOperation {
     associatedtype Output: RawModel
 
     @discardableResult
-    func perform(completion: (Result<Output, Error>) -> Void) -> Cancellable
+    func perform(completion: (Result<Output, Error>) -> Void) -> CancellableOperation
 }
 
 extension Int: RawModel, DataModel {}
